@@ -47,9 +47,9 @@ router.get("/", (req, res) => {
   router.post("/", (req, res) => {
     const newPost = req.body
 
-    if(newPost.title && newPost.content){
+    if(newPost.title && newPost.contents){
         Data.insert(newPost)
-        .then(post => {
+        .then(post=> {
             res.status(201).json(post)
         }).catch(err => {
         console.log(err)
@@ -62,24 +62,31 @@ router.get("/", (req, res) => {
 
 // here.................
   router.post("/:id/comments", (req, res) => {
-    const newPost = req.body
+    const {id}  = req.params;
+    const payload = { ...req.body, post_id: id }
+    
 
-    if(newPost.text){
-        Data.update(req.param.id, newPost)
-        .then(post => {
-            if(post){
-                res.status(200).json(post)
-            } else {
-                res.status(404).json({message: "The post with the specified ID does not exist."})
-            }
-    }).catch(err => {
-        console.log(err)
-        res.status(500).json({ error: "There was an error while saving the comment to the database"})
-    })
-    } else {
-    res.status(400).json({errorMessage: "Please provide text for the comment."})
-    }
-  });
+    Data.findById(id).then(response => {
+        if (response.length === 0) {
+          res.status(404).json({
+            errorMessage: "The post with the specified ID does not exist."
+          });
+        }
+      });
+      if (!req.body.text) {
+        return res.status(400).json({ errorMessage: "Please provide text for the comment." });
+      } else {
+        Data.insertComment(payload).then(response => {
+            res.status(201).json(response);
+          })
+          .catch(err => {
+            console.log(err.response);
+            res.status(500).json({errorMessage:
+                "There was an error while saving the comment to the database"
+            });
+          });
+      }
+    });
 
   router.delete("/:id", (req, res) => {
       const { id } = req.params;
@@ -99,9 +106,10 @@ router.get("/", (req, res) => {
   // 
   router.put("/:id", (req, res) => {
       const changes = req.body;
-
-    if(changes.title && changes.bio){
-        Data.update(req.param.id, changes)
+        const { id } = req.params;
+        
+    if(changes.title && changes.contents){
+        Data.update(id, changes)
         .then(post => {
             if(post){
                 res.status(200).json(post)
