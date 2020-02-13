@@ -93,8 +93,8 @@ router.get("/", (req, res) => {
 
     Data.remove(id).then(found => {
         if(found){
-            res.status()
-        }else {
+            res.status(200).json(found)
+        } else {
             res.status(404).json({message: "The post with the specified ID does not exist."})
         }
     }).catch(err => {
